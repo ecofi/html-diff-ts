@@ -1,39 +1,72 @@
-const webpack = require('webpack');
-const path = require('path');
-const UnminifiedWebpackPlugin = require('unminified-webpack-plugin');
-const CleanWebpackPlugin = require('clean-webpack-plugin');
+const path = require('path'),
+	webpack = require('webpack'),
+	CopyPlugin = require('copy-webpack-plugin'),
+	TerserPlugin = require("terser-webpack-plugin");
+
 
 module.exports = {
-    entry: {
-        htmldiff: ['babel-polyfill', './src/Diff.js'],
-    },
+	entry: {
+		"htmlcompare": './lib/cjs/index.js',
+		"htmlcompare.min": './lib/cjs/index.js',
+	},
+	output: {
+		//path: "./dist",
+		path: path.resolve(__dirname, 'dist'),
+		filename: "[name].js",
+		libraryTarget: 'umd',
+		library: 'HtmlCompare',
+		umdNamedDefine: true
+	},
+	mode: 'production',
+	externals: {
+		//"./lib/jszip.min.js": "JSZip"
+	},
+	resolve: {
+		aliasFields: [],
+		fallback: {
 
-    output: {
-        filename: 'htmldiff.min.js',
-        path: path.resolve(__dirname, 'dist'),
-        publicPath: '/dist/',
-        library: 'HtmlDiff',
-        libraryTarget: 'commonjs2'
-    },
-
-    module: {
-        rules: [
-            {
-                test: /\.m?js$/,
-                exclude: /(node_modules|bower_components)/,
-                use: {
-                    loader: 'babel-loader',
-                }
-            }
-        ]
-    },
-
-    plugins: [
-        new CleanWebpackPlugin(['dist']),
-        new UnminifiedWebpackPlugin()
-    ],
-
-    optimization: {
-        minimize: true
-    }
+		},
+	},
+	plugins: [
+		new webpack.NormalModuleReplacementPlugin(/^node:/, (resource) => {
+			resource.request = resource.request.replace(/^node:/, "");
+		}),
+	],
+	optimization: {
+		minimize: true,
+		minimizer: [new TerserPlugin({
+			include: /\.min\.js$/,
+			//parallel: true,
+		})],
+	},
+	cache: false
 };
+/*
+module.exports =
+
+{
+	entry: {
+		'htmldiff': './src/index.ts',
+		'htmldiff.min': './src/index.ts'
+	},
+	output: {
+		path: path.resolve(__dirname, '_bundles'),
+		filename: '[name].js',
+		libraryTarget: 'umd',
+		library: 'HtmlDiff',
+		umdNamedDefine: true
+	},
+	resolve: {
+		extensions: ['.ts', '.tsx', '.js']
+	},
+	devtool: 'source-map',
+	
+	module: {
+		rules: [{
+			test: /\.tsx?$/,
+			loader: 'ts-loader',
+			exclude: /node_modules/,
+		}],
+	},
+}
+*/
